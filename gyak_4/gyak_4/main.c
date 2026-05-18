@@ -13,7 +13,10 @@
 /******************************************************************************
 * Macros
 ******************************************************************************/
-
+#define OSSZEADAS 1
+#define KIVONAS 2
+#define SZORZAS 4
+#define OSZTAS 8
 
 /******************************************************************************
 * Constants
@@ -26,6 +29,9 @@
 int irany=0;
 int timer_cnt=0;
 int timer_task_10ms=0, timer_task_100ms=0, timer_task_500ms=0;
+int PB0_pushed = 0, PB1_pushed = 0, PB2_pushed = 0, PB3_pushed = 0, PB4_pushed = 0;
+int szam1=0, szam2=0;
+int muvelet=OSSZEADAS;
 
 /******************************************************************************
 * External Variables
@@ -46,6 +52,12 @@ void port_init(void)
 {
 	DDRA=0xff;
 	PORTA = 0x00;
+	
+	DDRB = (0<<PB0) | (0<<PB1) | (0<<PB2) | (0<<PB3) | (0<<PB4);
+	PORTB = (1<<PB0) | (1<<PB1) | (1<<PB2) | (1<<PB3) | (1<<PB4);
+	
+	DDRD = 0xff;
+	DDRE = 0xff;
 }
 
 void timer_init(void)
@@ -91,7 +103,72 @@ int main(void)
 			
 			if(timer_task_10ms)
 			{
+				PORTD = szam1 | (szam2<<4);
+				PORTE = muvelet;
+				switch(muvelet)
+				{
+					case OSSZEADAS:
+					{
+						PORTA = szam1+szam2;
+						break;
+					}
+					case KIVONAS:
+					{
+						PORTA = szam1-szam2;
+						break;
+					}
+					case SZORZAS:
+					{
+						PORTA = szam1*szam2;
+						break;
+					}
+					case OSZTAS:
+					{
+						PORTA = szam1/szam2;
+						break;
+					}
+					
+				}
 				
+				if((PINB & (1<<PB0)) == 0 && PB0_pushed == 0)
+				{
+					szam1++;
+					if(szam1>15) szam1=0;
+					PB0_pushed = 1;
+				}
+				if((PINB & (1<<PB0)) == (1<<PB0) && PB0_pushed == 1) PB0_pushed=0;
+				
+				if((PINB & (1<<PB1)) == 0 && PB1_pushed == 0)
+				{
+					szam1--;
+					if(szam1<0) szam1 = 15;
+					PB1_pushed = 1;
+				}
+				if((PINB & (1<<PB1)) == (1<<PB1) && PB1_pushed == 1) PB1_pushed=0;
+				
+				if((PINB & (1<<PB2)) == 0 && PB2_pushed == 0)
+				{
+					szam2++;
+					if(szam2>15) szam2=0;
+					PB2_pushed = 1;
+				}
+				if((PINB & (1<<PB2)) == (1<<PB2) && PB2_pushed == 1) PB2_pushed=0;
+				
+				if((PINB & (1<<PB3)) == 0 && PB3_pushed == 0)
+				{
+					szam2--;
+					if(szam2<0) szam2 = 15;
+					PB3_pushed = 1;
+				}
+				if((PINB & (1<<PB3)) == (1<<PB3) && PB3_pushed == 1) PB3_pushed=0;
+				
+				if((PINB & (1<<PB4)) == 0 && PB4_pushed == 0)
+				{
+					muvelet = muvelet<<1;
+					if(muvelet == 0x10) muvelet=OSSZEADAS;
+					PB4_pushed = 1;
+				}
+				if((PINB & (1<<PB4)) == (1<<PB4) && PB4_pushed == 1) PB4_pushed=0;
 				timer_task_10ms=0;
 			}
 			
@@ -103,17 +180,17 @@ int main(void)
 			
 			if(timer_task_500ms)
 			{
-				if(irany==0)
-				{
-					PORTA = PORTA << 1;
-				}
-				else
-				{
-					PORTA = PORTA >> 1;
-				}
-				
-				if(PORTA==0x80) irany=1;
-				if(PORTA==0x01) irany=0;
+				//if(irany==0)
+				//{
+					//PORTA = PORTA << 1;
+				//}
+				//else
+				//{
+					//PORTA = PORTA >> 1;
+				//}
+				//
+				//if(PORTA==0x80) irany=1;
+				//if(PORTA==0x01) irany=0;
 				timer_task_500ms=0;
 			}
 			
@@ -139,8 +216,3 @@ int main(void)
 /******************************************************************************
 * Interrupt Routines
 ******************************************************************************/
-
-
-
-
-
